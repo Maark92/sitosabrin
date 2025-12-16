@@ -17,8 +17,13 @@ export const metadata: Metadata = {
     siteName: "Con Strass o Senza",
     locale: "it_IT",
     type: "website",
+    
+  },
+  verification: {
+    google: "kYqbJ3xsQHbCu5YRZrKmmMmSz8L4BSQLBiJ0RKHS1GY",
   },
 };
+
 
 import { CookieBanner } from "@/components/cookie-banner";
 import { Analytics } from "@vercel/analytics/next";
