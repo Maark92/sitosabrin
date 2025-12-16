@@ -67,9 +67,46 @@ function Footer() {
         <div className="font-serif text-2xl font-bold text-white mb-6">
           Con Strass <span className="text-rose-400">o Senza</span>
         </div>
-        <p className="mb-4">Via Roma 123, Milano - Tel: +39 333 1234567</p>
-        <p>© 2025 Con Strass o Senza. All rights reserved.</p>
+        <p className="mb-2">Valguarnera (EN) - 94019</p>
+        <p className="mb-2">Tel: <a href="https://wa.me/393299362917" className="hover:text-rose-400 transition-colors">+39 329 936 2917</a></p>
+        <p className="mb-4 text-xs text-stone-500">Sabrina Palermo - P.IVA: [INSERIRE SE NECESSARIO]</p>
+        <p className="mb-4">© 2025 Con Strass o Senza. All rights reserved.</p>
+
+        <div className="flex justify-center gap-4 text-xs text-stone-600">
+          <a href="/privacy-policy" className="hover:text-rose-400 transition-colors">Privacy Policy</a>
+          <span>|</span>
+          <a href="/cookie-policy" className="hover:text-rose-400 transition-colors">Cookie Policy</a>
+        </div>
       </div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BeautySalon",
+            "name": "Con Strass o Senza",
+            "image": "https://constrassosenza.vercel.app/logo.png",
+            "telephone": "+393299362917",
+            "email": "sabrypalermo00@gmail.com",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Valguarnera Caropepe",
+              "addressRegion": "EN",
+              "postalCode": "94019",
+              "addressCountry": "IT"
+            },
+            "url": "https://constrassosenza.vercel.app",
+            "priceRange": "$$",
+            "openingHoursSpecification": {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+              "opens": "09:00",
+              "closes": "20:00",
+              "description": "Solo su prenotazione"
+            }
+          })
+        }}
+      />
     </footer>
   );
 }
