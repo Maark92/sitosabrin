@@ -5,8 +5,9 @@ export default function robots(): MetadataRoute.Robots {
         rules: {
             userAgent: '*',
             allow: '/',
-            disallow: ['/admin/', '/private/'],
+            // Aggiungo '/dashboard/' per sicurezza, così copriamo tutte le possibilità
+            disallow: ['/admin/', '/private/', '/dashboard/'],
         },
-        sitemap: 'https://constrassosenza.vercel.app/sitemap.xml',
+        sitemap: 'https://constrassosenzaa.vercel.app/sitemap.xml',
     };
 }
