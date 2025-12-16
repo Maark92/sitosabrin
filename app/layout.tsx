@@ -21,6 +21,7 @@ export const metadata: Metadata = {
 };
 
 import { CookieBanner } from "@/components/cookie-banner";
+import { Analytics } from "@vercel/analytics/next";
 
 export default function RootLayout({
   children,
@@ -32,6 +33,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased`}>
         {children}
         <CookieBanner />
+        <Analytics />
       </body>
     </html>
   );

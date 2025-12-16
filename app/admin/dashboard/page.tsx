@@ -2,7 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/utils/supabase";
-import { Scissors, Image, TrendingUp, Calendar, Clock, User, Megaphone } from "lucide-react";
+import { Scissors, Image, TrendingUp, Calendar, Clock, Megaphone } from "lucide-react";
+import { BookingsChart } from "@/components/bookings-chart";
+import { TrafficChart } from "@/components/traffic-chart";
 
 interface Booking {
     id: string;
@@ -29,13 +31,14 @@ export default function DashboardHome() {
     });
     const [todayBookings, setTodayBookings] = useState<Booking[]>([]);
     const [nextBooking, setNextBooking] = useState<Booking | null>(null);
+    const [chartData, setChartData] = useState<{ date: string; count: number }[]>([]);
 
     useEffect(() => {
         const fetchStats = async () => {
             // Counts
             const { count: servicesCount } = await supabase.from("services").select("*", { count: "exact", head: true });
             const { count: portfolioCount } = await supabase.from("portfolio").select("*", { count: "exact", head: true });
-            const { count: offersCount } = await supabase.from("offers").select("*", { count: "exact", head: true }); // Assuming 'offers' table exists now
+            const { count: offersCount } = await supabase.from("offers").select("*", { count: "exact", head: true });
 
             setStats({
                 services: servicesCount || 0,
@@ -48,20 +51,68 @@ export default function DashboardHome() {
             const { data: todayData } = await supabase
                 .from("bookings")
                 .select("*, slot:availability_slots!inner(*)")
-                .eq("slot.date", today)
-                .order("slot(start_time)");
-            if (todayData) setTodayBookings(todayData as any);
+                .eq("slot.date", today);
+            if (todayData) {
+                // Ordina per start_time in JavaScript
+                const sorted = todayData.sort((a: any, b: any) => 
+                    a.slot.start_time.localeCompare(b.slot.start_time)
+                );
+                setTodayBookings(sorted as any);
+            }
 
             // Next Booking
             const { data: nextData } = await supabase
                 .from("bookings")
                 .select("*, slot:availability_slots!inner(*)")
-                .gte("slot.date", today)
-                .order("slot(date)")
-                .order("slot(start_time)")
-                .limit(1)
-                .single();
-            if (nextData) setNextBooking(nextData as any);
+                .gte("slot.date", today);
+            if (nextData && nextData.length > 0) {
+                // Ordina per data e poi per start_time in JavaScript
+                const sorted = nextData.sort((a: any, b: any) => {
+                    const dateCompare = a.slot.date.localeCompare(b.slot.date);
+                    if (dateCompare !== 0) return dateCompare;
+                    return a.slot.start_time.localeCompare(b.slot.start_time);
+                });
+                setNextBooking(sorted[0] as any);
+            }
+
+            // Fetch Last 7 Days Trends
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+            const dateStr = sevenDaysAgo.toISOString().split("T")[0];
+
+            const { data: trendData } = await supabase
+                .from("bookings")
+                .select("slot:availability_slots!inner(date)")
+                .gte("slot.date", dateStr);
+
+            if (trendData) {
+                // Group by date
+                const counts: Record<string, number> = {};
+                // Initialize last 7 days with 0
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    counts[d.toISOString().split("T")[0]] = 0;
+                }
+
+                // Count actual bookings
+                trendData.forEach((item: any) => {
+                    if (counts[item.slot.date] !== undefined) {
+                        counts[item.slot.date]++;
+                    }
+                });
+
+                // Convert to array and sort
+                const formattedData = Object.entries(counts)
+                    .map(([date, count]) => ({
+                        date: new Date(date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }),
+                        count,
+                        rawDate: date
+                    }))
+                    .sort((a, b) => a.rawDate.localeCompare(b.rawDate));
+
+                setChartData(formattedData);
+            }
         };
         fetchStats();
     }, []);
@@ -70,7 +121,24 @@ export default function DashboardHome() {
         <div className="space-y-8">
             <div>
                 <h1 className="text-3xl font-serif text-stone-900">Dashboard</h1>
-                <p className="text-stone-500 mt-1">Benvenuto nel pannello di gestione.</p>
+                <div className="flex items-center gap-2 mt-1">
+                    <p className="text-stone-500">Benvenuto nel pannello di gestione.</p>
+                    <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium">Analytics Attive</span>
+                </div>
+            </div>
+
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="md:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-stone-200 min-w-0">
+                    <h2 className="text-lg font-bold text-stone-900 mb-2">Andamento Prenotazioni</h2>
+                    <p className="text-sm text-stone-500 mb-4">Ultimi 7 giorni</p>
+                    <BookingsChart data={chartData} />
+                </div>
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-200 min-w-0">
+                    <h2 className="text-lg font-bold text-stone-900 mb-2">Traffico Web (Reale)</h2>
+                    <p className="text-sm text-stone-500 mb-4">Visitatori unici ultimi 30 giorni</p>
+                    <TrafficChart />
+                </div>
             </div>
 
             {/* Hero Cards */}
@@ -127,6 +195,7 @@ export default function DashboardHome() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
                 {/* Next Client Widget */}
+                {/* ... existing next client widget content ... */}
                 <div className="bg-gradient-to-br from-rose-500 to-rose-600 rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
                     <div className="relative z-10">
                         <h2 className="text-xl font-medium opacity-90 mb-6">Prossimo Cliente</h2>
