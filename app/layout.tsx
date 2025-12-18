@@ -17,15 +17,21 @@ export const metadata: Metadata = {
     siteName: "Con Strass o Senza",
     locale: "it_IT",
     type: "website",
-    
+
   },
   verification: {
     google: "kYqbJ3xsQHbCu5YRZrKmmMmSz8L4BSQLBiJ0RKHS1GY",
+  },
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   },
 };
 
 
 import { CookieBanner } from "@/components/cookie-banner";
+import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { Analytics } from "@vercel/analytics/next";
 
 export default function RootLayout({
@@ -38,6 +44,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased`}>
         {children}
         <CookieBanner />
+        <AnalyticsTracker />
         <Analytics />
       </body>
     </html>

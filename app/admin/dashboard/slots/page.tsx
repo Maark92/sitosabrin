@@ -30,7 +30,20 @@ export default function SlotsPage() {
             .select("*")
             .order("date", { ascending: true })
             .order("start_time", { ascending: true });
-        if (data) setSlots(data);
+
+        if (data) {
+            // Smart Filter: Hide past slots automatically
+            const now = new Date();
+            const todayStr = now.toISOString().split("T")[0];
+            const currentTime = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+            const activeSlots = data.filter((s: Slot) => {
+                if (s.date > todayStr) return true;
+                if (s.date === todayStr && s.start_time >= currentTime) return true;
+                return false;
+            });
+            setSlots(activeSlots);
+        }
         setLoading(false);
     };
 

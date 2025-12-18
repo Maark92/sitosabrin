@@ -71,7 +71,22 @@ export default function BookingsPage() {
         service:services(id, title, price)
       `)
             .order("created_at", { ascending: false });
-        if (data) setBookings(data);
+
+        if (data) {
+            // Smart Filter: Hide past bookings automatically
+            const now = new Date();
+            const todayStr = now.toISOString().split("T")[0];
+            const currentTime = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+            const activeBookings = data.filter((b: any) => {
+                if (!b.slot) return false;
+                if (b.slot.date > todayStr) return true; // Future date
+                if (b.slot.date === todayStr && b.slot.start_time >= currentTime) return true; // Today future time
+                return false; // Past
+            });
+
+            setBookings(activeBookings);
+        }
         setLoading(false);
     };
 

@@ -33,6 +33,19 @@ export default function DashboardHome() {
     const [nextBooking, setNextBooking] = useState<Booking | null>(null);
     const [chartData, setChartData] = useState<{ date: string; count: number }[]>([]);
 
+    // Filters
+    const [bookingRange, setBookingRange] = useState<'7d' | '30d' | '6m' | '12m'>('7d');
+
+    const getDaysFromRange = (range: string) => {
+        switch (range) {
+            case '7d': return 7;
+            case '30d': return 30;
+            case '6m': return 180;
+            case '12m': return 365;
+            default: return 7;
+        }
+    };
+
     useEffect(() => {
         const fetchStats = async () => {
             // Counts
@@ -46,63 +59,85 @@ export default function DashboardHome() {
                 offers: offersCount || 0,
             });
 
-            // Today's Bookings
-            const today = new Date().toISOString().split("T")[0];
+            // Smart Date Logic
+            const now = new Date();
+            const todayStr = now.toISOString().split("T")[0];
+            const currentTime = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+            // 1. Today's Bookings (Show all for history purposes in list, or filter? User said "update list")
+            // "se passa l'orario... si deve cancellare da solo" -> Smart Filtering on Lists
             const { data: todayData } = await supabase
                 .from("bookings")
                 .select("*, slot:availability_slots!inner(*)")
-                .eq("slot.date", today);
+                .eq("slot.date", todayStr);
+
             if (todayData) {
-                // Ordina per start_time in JavaScript
-                const sorted = todayData.sort((a: any, b: any) => 
+                const sorted = todayData.sort((a: any, b: any) =>
                     a.slot.start_time.localeCompare(b.slot.start_time)
                 );
-                setTodayBookings(sorted as any);
+                // Optional: Filter out passed bookings from Today's list if requested, 
+                // but usually "Today's Appointments" shows the schedule. 
+                // However, "Prossimo Cliente" MUST filter.
+                // Let's keep Today's list as a schedule but maybe dim passed ones? 
+                // User asked: "si deve cancellare da solo". So let's filter purely future/current ones for the list.
+                const validToday = sorted.filter((b: any) => b.slot.start_time >= currentTime);
+                setTodayBookings(validToday as any);
             }
 
-            // Next Booking
+            // 2. Next Booking (Global)
+            // Fetch a batch of future bookings to find the real next one
             const { data: nextData } = await supabase
                 .from("bookings")
                 .select("*, slot:availability_slots!inner(*)")
-                .gte("slot.date", today);
+                .gte("slot.date", todayStr) // Get today and future
+                .order("slot(date)")
+                .limit(20); // Fetch enough to find the next valid one
+
             if (nextData && nextData.length > 0) {
-                // Ordina per data e poi per start_time in JavaScript
-                const sorted = nextData.sort((a: any, b: any) => {
-                    const dateCompare = a.slot.date.localeCompare(b.slot.date);
-                    if (dateCompare !== 0) return dateCompare;
+                // FIX: Sort exactly by Date then Time to ensure we get the IMMEDIATE next one
+                const sortedNext = nextData.sort((a: any, b: any) => {
+                    const dateDiff = a.slot.date.localeCompare(b.slot.date);
+                    if (dateDiff !== 0) return dateDiff;
                     return a.slot.start_time.localeCompare(b.slot.start_time);
                 });
-                setNextBooking(sorted[0] as any);
+
+                // Client-side filtering for precise time
+                const validNext = sortedNext.find((b: any) => {
+                    const bDate = b.slot.date;
+                    const bTime = b.slot.start_time;
+
+                    if (bDate > todayStr) return true; // Future date = valid
+                    if (bDate === todayStr && bTime >= currentTime) return true; // Today future time = valid
+                    return false; // Today past time = invalid
+                });
+
+                setNextBooking(validNext as any || null);
             }
 
-            // Fetch Last 7 Days Trends
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-            const dateStr = sevenDaysAgo.toISOString().split("T")[0];
+            // 3. Chart Data (Dynamic Range)
+            const days = getDaysFromRange(bookingRange);
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - (days - 1));
+            const startDateStr = startDate.toISOString().split("T")[0];
 
             const { data: trendData } = await supabase
                 .from("bookings")
                 .select("slot:availability_slots!inner(date)")
-                .gte("slot.date", dateStr);
+                .gte("slot.date", startDateStr);
 
             if (trendData) {
-                // Group by date
                 const counts: Record<string, number> = {};
-                // Initialize last 7 days with 0
-                for (let i = 0; i < 7; i++) {
+                // Init dates
+                for (let i = 0; i < days; i++) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
                     counts[d.toISOString().split("T")[0]] = 0;
                 }
 
-                // Count actual bookings
                 trendData.forEach((item: any) => {
-                    if (counts[item.slot.date] !== undefined) {
-                        counts[item.slot.date]++;
-                    }
+                    if (counts[item.slot.date] !== undefined) counts[item.slot.date]++;
                 });
 
-                // Convert to array and sort
                 const formattedData = Object.entries(counts)
                     .map(([date, count]) => ({
                         date: new Date(date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }),
@@ -115,7 +150,7 @@ export default function DashboardHome() {
             }
         };
         fetchStats();
-    }, []);
+    }, [bookingRange]); // Re-run when range changes
 
     return (
         <div className="space-y-8">
@@ -128,15 +163,31 @@ export default function DashboardHome() {
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="md:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-stone-200 min-w-0">
-                    <h2 className="text-lg font-bold text-stone-900 mb-2">Andamento Prenotazioni</h2>
-                    <p className="text-sm text-stone-500 mb-4">Ultimi 7 giorni</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Bookings Chart */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-200 min-w-0">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-bold text-stone-900">Andamento Prenotazioni</h2>
+                        <div className="flex gap-1 text-xs bg-stone-100 p-1 rounded-lg">
+                            {(['7d', '30d', '6m', '12m'] as const).map((r) => (
+                                <button
+                                    key={r}
+                                    onClick={() => setBookingRange(r)}
+                                    className={`px-2 py-1 rounded-md transition-all ${bookingRange === r
+                                        ? 'bg-white text-rose-500 shadow-sm font-medium'
+                                        : 'text-stone-500 hover:text-stone-900'
+                                        }`}
+                                >
+                                    {r === '7d' ? '7G' : r === '30d' ? '30G' : r === '6m' ? '6M' : '1A'}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                     <BookingsChart data={chartData} />
                 </div>
+
+                {/* Traffic Chart (Self-Contained Logic) */}
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-200 min-w-0">
-                    <h2 className="text-lg font-bold text-stone-900 mb-2">Traffico Web (Reale)</h2>
-                    <p className="text-sm text-stone-500 mb-4">Visitatori unici ultimi 30 giorni</p>
                     <TrafficChart />
                 </div>
             </div>

@@ -158,12 +158,13 @@ export function BookingModal({ isOpen, onClose, preselectedServiceId }: BookingM
                                     {step === 1 && "Seleziona data e orario"}
                                     {step === 2 && "Scegli il trattamento"}
                                     {step === 3 && "I tuoi dati"}
+                                    {step === 4 && "Riepilogo e Conferma"}
                                 </p>
                             </div>
 
                             {/* Progress */}
                             <div className="flex gap-2 mb-6">
-                                {[1, 2, 3].map((s) => (
+                                {[1, 2, 3, 4].map((s) => (
                                     <div
                                         key={s}
                                         className={`h-1 flex-1 rounded-full transition-colors ${s <= step ? "bg-rose-500" : "bg-stone-200"
@@ -292,11 +293,60 @@ export function BookingModal({ isOpen, onClose, preselectedServiceId }: BookingM
                                             Indietro
                                         </Button>
                                         <Button
-                                            onClick={handleSubmit}
-                                            disabled={loading}
+                                            onClick={() => setStep(4)} // Go to Confirm Step
                                             className="flex-1 bg-rose-500 hover:bg-rose-600"
                                         >
-                                            {loading ? "Invio..." : "Conferma Prenotazione"}
+                                            Riepilogo
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Step 4: Confirmation */}
+                            {step === 4 && (
+                                <div className="space-y-6">
+                                    <div className="bg-stone-50 p-6 rounded-2xl border border-stone-200">
+                                        <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                                            <Info size={18} className="text-rose-500" />
+                                            Riepilogo Prenotazione
+                                        </h3>
+                                        <div className="space-y-3 text-sm">
+                                            <div className="flex justify-between border-b border-stone-100 pb-2">
+                                                <span className="text-stone-500">Data</span>
+                                                <span className="font-medium text-stone-900">{selectedSlot ? formatDate(selectedSlot.date) : "-"}</span>
+                                            </div>
+                                            <div className="flex justify-between border-b border-stone-100 pb-2">
+                                                <span className="text-stone-500">Orario</span>
+                                                <span className="font-medium text-stone-900">{selectedSlot ? formatTime(selectedSlot.start_time) : "-"}</span>
+                                            </div>
+                                            <div className="flex justify-between border-b border-stone-100 pb-2">
+                                                <span className="text-stone-500">Trattamento</span>
+                                                <span className="font-medium text-stone-900">
+                                                    {services.find(s => s.id === selectedService)?.title || "In negozio"}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between pt-1">
+                                                <span className="text-stone-500">Cliente</span>
+                                                <span className="font-medium text-stone-900">{formData.name}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100 text-yellow-800 text-sm flex gap-3 items-start">
+                                        <Info className="shrink-0 mt-0.5" size={16} />
+                                        <p>Sei sicuro di voler confermare? Riceverai un promemoria prima dell'appuntamento.</p>
+                                    </div>
+
+                                    <div className="flex gap-2 pt-2">
+                                        <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
+                                            Modifica Dati
+                                        </Button>
+                                        <Button
+                                            onClick={handleSubmit}
+                                            disabled={loading}
+                                            className="flex-1 bg-rose-500 hover:bg-rose-600 font-bold"
+                                        >
+                                            {loading ? "Invio..." : "CONFERMA ✅"}
                                         </Button>
                                     </div>
                                 </div>
