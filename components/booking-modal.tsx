@@ -54,7 +54,19 @@ export function BookingModal({ isOpen, onClose, preselectedServiceId }: BookingM
             .gte("date", new Date().toISOString().split("T")[0])
             .order("date")
             .order("start_time");
-        if (slotsData) setSlots(slotsData);
+        if (slotsData) {
+            // Filter out past slots for today
+            const now = new Date();
+            const todayStr = now.toISOString().split("T")[0];
+            const currentTime = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+            const validSlots = slotsData.filter((s: Slot) => {
+                if (s.date > todayStr) return true;
+                if (s.date === todayStr && s.start_time >= currentTime) return true;
+                return false;
+            });
+            setSlots(validSlots);
+        }
 
         // Fetch services
         const { data: servicesData } = await supabase.from("services").select("id, title, price");
@@ -92,12 +104,20 @@ export function BookingModal({ isOpen, onClose, preselectedServiceId }: BookingM
         // Mark slot as booked
         await supabase.from("availability_slots").update({ is_booked: true }).eq("id", selectedSlot.id);
 
-        // Send Notification (Fire and forget, don't block UI)
+        // Send Telegram Notification (Server Action)
         sendAdminNotification({
             customer_name: formData.name,
             date: selectedSlot.date,
             start_time: selectedSlot.start_time,
             service_name: selectedServiceObj ? selectedServiceObj.title : "In negozio"
+        });
+
+        // Send Internal Dashboard Notification (RPC)
+        await supabase.rpc('notify_admin_new_booking', {
+            customer_name: formData.name,
+            booking_date: formatDate(selectedSlot.date),
+            booking_time: formatTime(selectedSlot.start_time),
+            service_title: selectedServiceObj ? selectedServiceObj.title : "In negozio"
         });
 
         setLoading(false);

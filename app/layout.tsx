@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Con Strass o Senza | Onicotecnica Valguarnera",
     description: "Nail Art unica e trattamenti esclusivi a Valguarnera (EN).",
-    url: "https://constrassosenza.vercel.app",
+    url: "https://constrassosenzaa.vercel.app",
     siteName: "Con Strass o Senza",
     locale: "it_IT",
     type: "website",
@@ -46,6 +46,18 @@ export default function RootLayout({
         <CookieBanner />
         <AnalyticsTracker />
         <Analytics />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "Con Strass o Senza",
+              "alternateName": ["Sito Sabrina", "Onicotecnica Valguarnera"],
+              "url": "https://constrassosenzaa.vercel.app",
+            }),
+          }}
+        />
       </body>
     </html>
   );

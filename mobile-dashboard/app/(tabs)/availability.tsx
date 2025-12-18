@@ -34,17 +34,20 @@ export default function AvailabilityScreen() {
                 .order("start_time", { ascending: true });
 
             if (data) {
-                // Smart Filter: Hide past slots automatically
                 const now = new Date();
                 const todayStr = now.toISOString().split("T")[0];
-                const currentTime = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
 
-                const activeSlots = data.filter((s: Slot) => {
-                    if (s.date > todayStr) return true;
-                    if (s.date === todayStr && s.start_time >= currentTime) return true;
-                    return false;
+                const filteredSlots = data.filter((s: Slot) => {
+                    const slotDateTime = new Date(`${todayStr}T${s.start_time}`);
+                    // If it is today, check if time has passed
+                    if (s.date === todayStr) {
+                        const currentDateTime = new Date();
+                        return slotDateTime > currentDateTime;
+                    }
+                    // Future dates always show
+                    return s.date > todayStr;
                 });
-                setSlots(activeSlots);
+                setSlots(filteredSlots);
             }
         } catch (error) {
             console.error(error);

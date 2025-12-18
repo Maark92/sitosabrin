@@ -18,6 +18,7 @@ import {
     Sun
 } from "lucide-react";
 import Link from "next/link";
+import { NotificationCenter } from "@/components/notification-center";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
@@ -93,8 +94,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
-                                        ? "bg-rose-500 text-white shadow-md"
-                                        : `${darkMode ? "text-stone-400 hover:bg-stone-800 hover:text-white" : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"}`
+                                    ? "bg-rose-500 text-white shadow-md"
+                                    : `${darkMode ? "text-stone-400 hover:bg-stone-800 hover:text-white" : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"}`
                                     }`}
                             >
                                 <Icon size={20} />
@@ -109,8 +110,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <button
                         onClick={() => setDarkMode(!darkMode)}
                         className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl border transition-all ${darkMode
-                                ? "bg-stone-800 border-stone-700 text-yellow-400 hover:bg-stone-700"
-                                : "bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100"
+                            ? "bg-stone-800 border-stone-700 text-yellow-400 hover:bg-stone-700"
+                            : "bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100"
                             }`}
                     >
                         {darkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -134,20 +135,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <h1 className="font-serif text-xl font-bold">
                     Con Strass <span className="text-rose-500">o Senza</span>
                 </h1>
-                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-                    {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-                </button>
+                <div className="flex items-center gap-4">
+                    <NotificationCenter />
+                    <button onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+                        {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+                    </button>
+                </div>
             </div>
 
             {/* Mobile Sidebar Overlay */}
             {isSidebarOpen && (
-                <div className="lg:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)}>
+                <div className="lg:hidden fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)}>
                     <aside
-                        className={`w-72 h-full pt-20 p-4 flex flex-col shadow-2xl ${darkMode ? "bg-stone-900 text-white" : "bg-white text-stone-900"
+                        className={`w-[80%] max-w-sm h-full pt-6 p-4 flex flex-col shadow-2xl ${darkMode ? "bg-stone-900 text-white" : "bg-white text-stone-900"
                             }`}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <nav className="flex-1 space-y-2">
+                        <div className="flex justify-between items-center mb-6 px-2">
+                            <h2 className="font-serif text-xl font-bold">Menu</h2>
+                            <button onClick={() => setIsSidebarOpen(false)} className="p-2 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <nav className="flex-1 space-y-2 overflow-y-auto">
                             {navItems.map((item) => {
                                 const Icon = item.icon;
                                 const isActive = pathname === item.href;
@@ -157,8 +167,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         href={item.href}
                                         onClick={() => setIsSidebarOpen(false)}
                                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
-                                                ? "bg-rose-500 text-white shadow-md"
-                                                : `${darkMode ? "text-stone-400 hover:bg-stone-800" : "text-stone-600 hover:bg-stone-100"}`
+                                            ? "bg-rose-500 text-white shadow-md"
+                                            : `${darkMode ? "text-stone-400 hover:bg-stone-800" : "text-stone-600 hover:bg-stone-100"}`
                                             }`}
                                     >
                                         <Icon size={20} />
@@ -172,8 +182,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             <button
                                 onClick={() => setDarkMode(!darkMode)}
                                 className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl border transition-all ${darkMode
-                                        ? "bg-stone-800 border-stone-700 text-yellow-400 hover:bg-stone-700"
-                                        : "bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100"
+                                    ? "bg-stone-800 border-stone-700 text-yellow-400 hover:bg-stone-700"
+                                    : "bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100"
                                     }`}
                             >
                                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -195,6 +205,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Main Content */}
             <main className={`flex-1 p-6 lg:ml-64 pt-24 lg:pt-6 transition-colors duration-200 ${darkMode ? "text-stone-100" : "text-stone-900"
                 }`}>
+                <div className="hidden lg:flex justify-end mb-6">
+                    <NotificationCenter />
+                </div>
                 {children}
             </main>
         </div>

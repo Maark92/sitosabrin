@@ -79,10 +79,9 @@ export default function BookingsPage() {
             const currentTime = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
 
             const activeBookings = data.filter((b: any) => {
-                if (!b.slot) return false;
-                if (b.slot.date > todayStr) return true; // Future date
-                if (b.slot.date === todayStr && b.slot.start_time >= currentTime) return true; // Today future time
-                return false; // Past
+                if (b.slot.date > todayStr) return true;
+                if (b.slot.date === todayStr && b.slot.start_time >= currentTime) return true;
+                return false;
             });
 
             setBookings(activeBookings);
